@@ -1,0 +1,18 @@
+FROM alpine/git AS fetch
+RUN mkdir /data
+WORKDIR /data
+RUN git clone https://github.com/sebsto/webapp.git
+RUN ls 
+
+FROM maven:3.8.3-openjdk-11-slim AS build
+RUN mkdir /build
+WORKDIR /build
+COPY --from=fetch /data/webapp ./
+RUN mvn clean install
+RUN ls target/
+
+FROM tomcat:jdk11-openjdk-slim
+RUN rm -rf /usr/local/tomcat/webapps/*
+COPY --from=build /build/target/WebApp.war /usr/local/tomcat/webapps/ROOT.war
+EXPOSE 8080
+CMD [ "catalina.sh", "run" ]
